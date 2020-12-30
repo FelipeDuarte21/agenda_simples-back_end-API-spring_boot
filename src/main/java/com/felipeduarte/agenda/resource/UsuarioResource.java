@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.felipeduarte.agenda.model.Usuario;
+import com.felipeduarte.agenda.resource.exceptions.ObjectBadRequestException;
 import com.felipeduarte.agenda.service.UsuarioService;
 
 @RestController
@@ -31,7 +32,7 @@ public class UsuarioResource {
 		
 		usuario = this.usuarioService.salvar(usuario);
 		
-		if(usuario == null) throw new RuntimeException("Erro ao cadastrar");
+		if(usuario == null) throw new ObjectBadRequestException("Erro ao cadastrar usuário");
 		
 		return ResponseEntity.status(HttpStatus.OK).body(usuario);
 	}
@@ -41,7 +42,7 @@ public class UsuarioResource {
 		
 		usuario = this.usuarioService.alterar(usuario);
 		
-		if(usuario == null) throw new RuntimeException("Erro ao alterar usuario");
+		if(usuario == null) throw new ObjectBadRequestException("Erro ao alterar usuário");
 		
 		return ResponseEntity.status(HttpStatus.OK).body(usuario);
 		
@@ -52,7 +53,7 @@ public class UsuarioResource {
 		
 		boolean resp = this.usuarioService.excluir(id);
 		
-		if(resp == false) throw new RuntimeException("Erro ao excluir");
+		if(resp == false) throw new ObjectBadRequestException("Erro ao excluir usuário");
 		
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}

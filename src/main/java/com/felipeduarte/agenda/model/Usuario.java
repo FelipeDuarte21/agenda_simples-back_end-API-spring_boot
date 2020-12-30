@@ -1,27 +1,32 @@
 package com.felipeduarte.agenda.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-public class Contato implements Serializable{
-
-	private static final long serialVersionUID = 1L;
+public class Usuario implements Serializable{
 	
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
@@ -31,28 +36,26 @@ public class Contato implements Serializable{
 	@Size(min = 3, max = 50, message = "Nome deve estar entre 3 a 50 caracteres")
 	private String nome;
 	
-	@Column(length = 10)
-	@NotEmpty(message = "Telefone é obrigatório")
-	@Size(min = 10, max = 10, message = "Telefone são necessariamente 10 caracteres")
-	private String telefone;
-	
-	@Column(length = 11)
-	@NotEmpty(message = "Celular é obrigatório")
-	@Size(min = 11, max = 11, message = "Celular são necessariamente 10 caracteres")
-	private String celular;
-	
 	@Column(length = 80)
 	@NotEmpty(message = "Email é obrigatório")
 	@Email(message = "Email inválido!")
 	@Size(max = 80, message = "Email deve ter até 80 caracteres")
 	private String email;
 	
-	@JsonIgnore
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "id_usuario")
-	private Usuario usuario;
+	@NotEmpty(message = "Senha é obrigatório")
+	@Size(min = 8, max = 16, message = "Senha deve ter entre 8 a 16 caracteres")
+	private String senha;
 	
-	public Contato() {
+	@NotNull(message = "Tipo do usuário é obrigatório")
+	@ElementCollection
+	@CollectionTable(name = "tipo_usuario")
+	private Set<Integer> tipo = new HashSet<>();
+	
+	@JsonIgnore
+	@OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
+	private List<Contato> contatos = new ArrayList<>();
+	
+	public Usuario() {
 		
 	}
 
@@ -72,22 +75,6 @@ public class Contato implements Serializable{
 		this.nome = nome;
 	}
 
-	public String getTelefone() {
-		return telefone;
-	}
-
-	public void setTelefone(String telefone) {
-		this.telefone = telefone;
-	}
-
-	public String getCelular() {
-		return celular;
-	}
-
-	public void setCelular(String celular) {
-		this.celular = celular;
-	}
-
 	public String getEmail() {
 		return email;
 	}
@@ -96,12 +83,28 @@ public class Contato implements Serializable{
 		this.email = email;
 	}
 
-	public Usuario getUsuario() {
-		return usuario;
+	public String getSenha() {
+		return senha;
 	}
 
-	public void setUsuario(Usuario usuario) {
-		this.usuario = usuario;
+	public void setSenha(String senha) {
+		this.senha = senha;
+	}
+
+	public Set<Integer> getTipo() {
+		return tipo;
+	}
+
+	public void setTipo(Set<Integer> tipo) {
+		this.tipo = tipo;
+	}
+
+	public List<Contato> getContatos() {
+		return contatos;
+	}
+
+	public void setContatos(List<Contato> contatos) {
+		this.contatos = contatos;
 	}
 
 	@Override
@@ -120,7 +123,7 @@ public class Contato implements Serializable{
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Contato other = (Contato) obj;
+		Usuario other = (Usuario) obj;
 		if (id == null) {
 			if (other.id != null)
 				return false;
@@ -128,5 +131,5 @@ public class Contato implements Serializable{
 			return false;
 		return true;
 	}
-
+	
 }

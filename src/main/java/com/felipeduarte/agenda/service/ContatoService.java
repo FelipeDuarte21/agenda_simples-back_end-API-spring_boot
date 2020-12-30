@@ -9,99 +9,124 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 
 import com.felipeduarte.agenda.model.Contato;
+import com.felipeduarte.agenda.model.Usuario;
+import com.felipeduarte.agenda.model.dtos.ContatoDTO;
 import com.felipeduarte.agenda.repository.ContatoRepository;
 
 @Service
 public class ContatoService {
 	
 	@Autowired
-	private ContatoRepository repository;
+	private ContatoRepository contatoRepository;
 	
-	public Contato salvar(Contato contato) {
+	@Autowired
+	private UsuarioService usuarioService;
+	
+	public Contato salvar(ContatoDTO contatoDTO) {
 		
-		contato = this.repository.save(contato);
+		Usuario usuario = this.usuarioService.buscarPorId(contatoDTO.getUsuario());
 		
-		if(contato != null) {
+		Contato contato;
+		
+		if(usuario == null) {
+			contato = new Contato();
+			contato.setUsuario(null);
 			return contato;
 		}
 		
-		return null;
-		
-	}
-	
-	public Contato alterar(Contato contato) {
-		
-		Optional<Contato> c = this.repository.findById(contato.getId());
+		Optional<Contato> c = this.contatoRepository.findByTelefoneAndCelularAndEmail(
+				contatoDTO.getTelefone(), contatoDTO.getCelular(), contatoDTO.getEmail());
 		
 		if(c.isPresent()) {
-		
-			contato = this.repository.save(contato);
-		
-			if(contato != null) {
-				return contato;
-			}
-			
+			contato = new Contato();
+			contato.setNome(null);
+			return contato;
 		}
 		
-		return null;
+		contato = Contato.converteContatoDTOParaContato(contatoDTO, usuario);
+		
+		contato = this.contatoRepository.save(contato);
+		
+		return contato;
+	}
+	
+	public Contato alterar(ContatoDTO contatoDTO) {
+		
+		Contato contato;
+		
+		if(contatoDTO.getId() == null) {
+			contato = new Contato();
+			contato.setId(null);
+			return contato;
+		}
+	
+		Optional<Contato> c = this.contatoRepository.findById(contatoDTO.getId());
+		
+		if(c.isEmpty()) {
+			contato = new Contato();
+			contato.setId(0L);
+			contato.setNome(null);
+			return contato;
+		}
+		
+		contato = Contato.converteContatoDTOParaContato(contatoDTO, c.get().getUsuario());
+		
+		contato = this.contatoRepository.save(contato);
+		
+		return contato;
 	}
 	
 	public boolean excluir(Long id) {
 		
-		Optional<Contato> contato = this.repository.findById(id);
+		Optional<Contato> contato = this.contatoRepository.findById(id);
 		
-		if(contato.isPresent()) {
+		if(contato.isEmpty()) return false; 
 			
-			this.repository.delete(contato.get());
+		this.contatoRepository.delete(contato.get());
 			
-			return true;
-			
-		}
-		
-		return false;
+		return true;
 	}
 	
-	public Page<Contato> buscarPorNome(String nome,Integer page, Integer size){
+	public Page<Contato> buscarPorNome(Long idUsuario, String nome,Integer pagina, Integer qtdPorPagina){
 		
-		PageRequest pg = PageRequest.of(page, size,Direction.ASC,"nome");
+		Usuario usuario = this.usuarioService.buscarPorId(idUsuario);
 		
-		Page<Contato> contatos;
+		if(usuario == null) return null;
+		
+		PageRequest pg = PageRequest.of(pagina, qtdPorPagina,Direction.ASC,"nome");
+		
+		Page<Contato> paginaContatos;
 		
 		if(!nome.isEmpty()) {
-			contatos = this.repository.findByNomeContaining(nome, pg);
+			paginaContatos = this.contatoRepository.findByUsuarioAndNomeContaining(usuario, nome, pg);
 		}else {
-			contatos = this.buscarTodos(page, size);
+			paginaContatos = this.contatoRepository.findByUsuario(usuario, pg);
 		}
 			
-		if(contatos != null) {
-			return contatos;
-		}
-		
-		return null;
+		return paginaContatos;
 	}
 	
 	public Contato buscarPorId(Long id){
 		
-		Optional<Contato> contato = this.repository.findById(id);
+		Optional<Contato> contato = this.contatoRepository.findById(id);
 		
-		if(contato.isPresent()) {
-			return contato.get();
-		}
+		if(contato.isEmpty()) return null;
 		
-		return null;
+		return contato.get();
+		
 	}
 	
-	public Page<Contato> buscarTodos(Integer page,Integer size){
+	public Page<Contato> buscarTodos(Long idUsuario, Integer pagina,Integer qtdPorPagina){
 		
-		PageRequest pg = PageRequest.of(page, size,Direction.ASC,"nome");
+		Usuario usuario = this.usuarioService.buscarPorId(idUsuario);
+	
+		if(usuario == null) return null;
 		
-		Page<Contato> contatos = this.repository.findAll(pg);
+		PageRequest pg = PageRequest.of(pagina, qtdPorPagina,Direction.ASC,"nome");
 		
-		if(contatos != null) {
-			return contatos;
-		}
+		Page<Contato> paginaContatos = this.contatoRepository.findByUsuario(usuario, pg);
 		
-		return null;
+		return paginaContatos;
 	}
 	
 }

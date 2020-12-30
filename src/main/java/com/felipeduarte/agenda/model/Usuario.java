@@ -17,7 +17,6 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -28,7 +27,7 @@ public class Usuario implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
 	@Column(length = 50)
@@ -36,7 +35,7 @@ public class Usuario implements Serializable{
 	@Size(min = 3, max = 50, message = "Nome deve estar entre 3 a 50 caracteres")
 	private String nome;
 	
-	@Column(length = 80)
+	@Column(length = 80, unique = true)
 	@NotEmpty(message = "Email é obrigatório")
 	@Email(message = "Email inválido!")
 	@Size(max = 80, message = "Email deve ter até 80 caracteres")
@@ -46,7 +45,7 @@ public class Usuario implements Serializable{
 	@Size(min = 8, max = 16, message = "Senha deve ter entre 8 a 16 caracteres")
 	private String senha;
 	
-	@NotNull(message = "Tipo do usuário é obrigatório")
+	@NotEmpty(message = "Tipo do usuário é obrigatório")
 	@ElementCollection
 	@CollectionTable(name = "tipo_usuario")
 	private Set<Integer> tipo = new HashSet<>();

@@ -23,6 +23,13 @@ public class UsuarioService {
 	
 	public Usuario salvar(Usuario usuario) {
 		
+		Optional<Usuario> usu = this.usuarioRepository.findByEmail(usuario.getEmail());
+		
+		if(usu.isPresent()) {
+			usuario.setEmail(null);
+			return usuario;
+		}
+		
 		//Encriptar a senha aqui
 		
 		Set<Integer> tipos = usuario.getTipo();
@@ -38,7 +45,19 @@ public class UsuarioService {
 	
 	public Usuario alterar(Usuario usuario) {
 		
-		if(usuario.getId() == null) return null;
+		if(usuario.getId() == null) {
+			usuario.setId(null);
+			return usuario;
+		}
+		
+		Optional<Usuario> usu = this.usuarioRepository.findById(usuario.getId());
+		
+		if(usu.isEmpty()) {
+			usuario.setNome(null);
+			return usuario;
+		}
+		
+		usuario.setTipo(usu.get().getTipo());
 		
 		usuario = this.usuarioRepository.save(usuario);
 		

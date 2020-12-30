@@ -1,5 +1,7 @@
 package com.felipeduarte.agenda.resource;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.felipeduarte.agenda.model.Contato;
+import com.felipeduarte.agenda.model.dtos.ContatoDTO;
+import com.felipeduarte.agenda.resource.exceptions.ObjectBadRequestException;
+import com.felipeduarte.agenda.resource.exceptions.ObjectNotFoundException;
 import com.felipeduarte.agenda.service.ContatoService;
 
 @CrossOrigin
@@ -24,83 +29,84 @@ import com.felipeduarte.agenda.service.ContatoService;
 public class ContatoResource {
 	
 	@Autowired
-	private ContatoService service;
+	private ContatoService contatoService;
 	
 	@PostMapping
-	public ResponseEntity<Contato> salvar(@RequestBody Contato contato){
+	public ResponseEntity<Contato> salvar(@RequestBody @Valid ContatoDTO contatoDTO){
 		
-		contato = this.service.salvar(contato);
+		Contato contato = this.contatoService.salvar(contatoDTO);
 		
-		if(contato != null) {
-			return ResponseEntity.status(HttpStatus.CREATED).body(contato);
-		}
+		if(contato == null) throw new ObjectBadRequestException("Erro ao cadastrar contato!"); 
+		
+		if(contato.getNome() == null) throw new ObjectBadRequestException("Contato já cadastrado!");
+		
+		if(contato.getUsuario() == null) throw new ObjectNotFoundException(
+				"Usuario não encontrado, verifique o id informado!");
 			
-		throw new RuntimeException("Erro!");
-		
+		return ResponseEntity.status(HttpStatus.CREATED).body(contato);
 	}
 	
 	@PutMapping
-	public ResponseEntity<Contato> alterar(@RequestBody Contato contato){
+	public ResponseEntity<Contato> alterar(@RequestBody ContatoDTO contatoDTO){
 		
-		contato = this.service.alterar(contato);
+		Contato contato = this.contatoService.alterar(contatoDTO);
 		
-		if(contato != null) {
-			return ResponseEntity.status(HttpStatus.OK).body(contato);
-		}
+		if(contato == null) throw new ObjectBadRequestException("Erro ao alterar contato");
+		
+		if(contato.getId() == null) throw new ObjectBadRequestException("Id não informado!");
+		
+		if(contato.getNome() == null) throw new ObjectNotFoundException(
+				"Contato não encontrado, verifique id informado!");
 			
-		throw new RuntimeException("Erro!");
-		
+		return ResponseEntity.status(HttpStatus.OK).body(contato);
 	}
 	
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> excluir(@PathVariable Long id){
 		
-		boolean certo = this.service.excluir(id);
+		boolean resp = this.contatoService.excluir(id);
 		
-		if(certo) return ResponseEntity.status(HttpStatus.OK).build();
+		if(resp == false) throw new ObjectNotFoundException(
+				"Contato não encontrado, verifique o id informado!");
 		
-		throw new RuntimeException("Erro!");
+		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
 	
 	@GetMapping("/search")
-	public ResponseEntity<Page<Contato>> buscarPorNome(@RequestParam String nome,
-			@RequestParam(defaultValue = "0") Integer page,
-			@RequestParam(defaultValue = "5") Integer size){
+	public ResponseEntity<Page<Contato>> buscarPorNome(@RequestParam Long idUsuario,
+			@RequestParam String nome,
+			@RequestParam(defaultValue = "0") Integer pagina,
+			@RequestParam(defaultValue = "5") Integer qtdPorPagina){
 		
-		Page<Contato> contatos = this.service.buscarPorNome(nome,page,size);
+		Page<Contato> paginaContatos = this.contatoService.buscarPorNome(idUsuario,nome,pagina,qtdPorPagina);
 		
-		if(contatos != null) {
-			return ResponseEntity.status(HttpStatus.OK).body(contatos);
-		}
+		if(paginaContatos == null) throw new ObjectBadRequestException("Erro ao buscar contatos, verifique o id do usuario");
 		
-		throw new RuntimeException("Erro!");
+		return ResponseEntity.status(HttpStatus.OK).body(paginaContatos);
+		
 	}
 	
 	@GetMapping("/{id}")
 	public ResponseEntity<Contato> buscarPorId(@PathVariable Long id){
 		
-		Contato contato = this.service.buscarPorId(id);
+		Contato contato = this.contatoService.buscarPorId(id);
 		
-		if(contato != null) {
-			return ResponseEntity.status(HttpStatus.OK).body(contato);
-		}
-		
-		throw new RuntimeException("Contato não encontrado!");
+		if(contato == null) throw new ObjectNotFoundException("Contato não encontrado!");
+			
+		return ResponseEntity.status(HttpStatus.OK).body(contato);
 	}
 
 	@GetMapping
-	public ResponseEntity<Page<Contato>> buscarTodos(
-			@RequestParam(defaultValue = "0") Integer page,
-			@RequestParam(defaultValue = "5") Integer size){
+	public ResponseEntity<Page<Contato>> buscarTodos(@RequestParam Long idUsuario,
+			@RequestParam(defaultValue = "0") Integer pagina,
+			@RequestParam(defaultValue = "5") Integer qtdPorPagina){
 		
-		Page<Contato> contatos = this.service.buscarTodos(page,size);
+		Page<Contato> paginaContatos = this.contatoService.buscarTodos(idUsuario,pagina,qtdPorPagina);
 		
-		if(contatos != null) {
-			return ResponseEntity.status(HttpStatus.OK).body(contatos);
-		}
+		if(paginaContatos == null) throw new ObjectBadRequestException("Erro ao buscar contatos, verifique o id do usuario");
 		
-		throw new RuntimeException("Nada Encontrado!");
+		return ResponseEntity.status(HttpStatus.OK).body(paginaContatos);
 	}
 	
 }

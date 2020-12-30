@@ -14,8 +14,8 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.felipeduarte.agenda.model.dtos.ContatoDTO;
 
 @Entity
 public class Contato implements Serializable{
@@ -23,7 +23,7 @@ public class Contato implements Serializable{
 	private static final long serialVersionUID = 1L;
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
 	@Column(length = 50)
@@ -127,6 +127,18 @@ public class Contato implements Serializable{
 		} else if (!id.equals(other.id))
 			return false;
 		return true;
+	}
+	
+	public static Contato converteContatoDTOParaContato(ContatoDTO contato, Usuario usuario) {
+		Contato c = new Contato();
+		c.setId(contato.getId()); 
+		c.setNome(contato.getNome());
+		c.setTelefone(contato.getTelefone());
+		c.setCelular(contato.getCelular());
+		c.setEmail(contato.getEmail());
+		c.setUsuario(usuario);
+		
+		return c;
 	}
 
 }

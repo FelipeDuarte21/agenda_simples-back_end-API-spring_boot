@@ -2,8 +2,8 @@ package com.felipeduarte.agenda.model.enums;
 
 public enum TipoUsuario {
 	
-	ADMIN(0, "ADMIN"),
-	USUARIO(1, "USER");
+	ADMIN(0, "ROLE_ADMIN"),
+	USUARIO(1, "ROLE_USER");
 	
 	private int codigo;
 	private String descricao;

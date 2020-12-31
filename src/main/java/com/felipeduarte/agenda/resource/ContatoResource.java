@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ public class ContatoResource {
 	@Autowired
 	private ContatoService contatoService;
 	
+	@PreAuthorize("hasAnyRole('USER')")
 	@PostMapping
 	public ResponseEntity<Contato> salvar(@RequestBody @Valid ContatoDTO contatoDTO){
 		
@@ -46,6 +48,7 @@ public class ContatoResource {
 		return ResponseEntity.status(HttpStatus.CREATED).body(contato);
 	}
 	
+	@PreAuthorize("hasAnyRole('USER')")
 	@PutMapping
 	public ResponseEntity<Contato> alterar(@RequestBody ContatoDTO contatoDTO){
 		
@@ -61,6 +64,7 @@ public class ContatoResource {
 		return ResponseEntity.status(HttpStatus.OK).body(contato);
 	}
 	
+	@PreAuthorize("hasAnyRole('USER')")
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> excluir(@PathVariable Long id){
 		
@@ -72,7 +76,7 @@ public class ContatoResource {
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
-	
+	@PreAuthorize("hasAnyRole('USER')")
 	@GetMapping("/search")
 	public ResponseEntity<Page<Contato>> buscarPorNome(@RequestParam Long idUsuario,
 			@RequestParam String nome,
@@ -87,6 +91,7 @@ public class ContatoResource {
 		
 	}
 	
+	@PreAuthorize("hasAnyRole('USER')")
 	@GetMapping("/{id}")
 	public ResponseEntity<Contato> buscarPorId(@PathVariable Long id){
 		
@@ -97,6 +102,7 @@ public class ContatoResource {
 		return ResponseEntity.status(HttpStatus.OK).body(contato);
 	}
 
+	@PreAuthorize("hasAnyRole('USER')")
 	@GetMapping
 	public ResponseEntity<Page<Contato>> buscarTodos(@RequestParam Long idUsuario,
 			@RequestParam(defaultValue = "0") Integer pagina,

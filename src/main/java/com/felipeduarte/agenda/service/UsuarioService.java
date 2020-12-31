@@ -1,7 +1,6 @@
 package com.felipeduarte.agenda.service;
 
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,8 +12,10 @@ import org.springframework.stereotype.Service;
 
 import com.felipeduarte.agenda.model.Usuario;
 import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
-import com.felipeduarte.agenda.model.enums.TipoUsuario;
 import com.felipeduarte.agenda.repository.UsuarioRepository;
+import com.felipeduarte.agenda.resource.exceptions.AuthorizationException;
+import com.felipeduarte.agenda.security.User;
+import com.felipeduarte.agenda.security.UserService;
 
 @Service
 public class UsuarioService {
@@ -39,12 +40,6 @@ public class UsuarioService {
 		
 		usuario.setSenha(this.bCrypt.encode(usuario.getSenha()));
 		
-		Set<Integer> tipos = usuario.getTipo();
-		for(Integer tipo: tipos) {
-			if(tipo == TipoUsuario.ADMIN.getCodigo()) 
-				usuario.getTipo().add(TipoUsuario.USUARIO.getCodigo());
-		}
-		
 		usuario = this.usuarioRepository.save(usuario);
 		
 		return usuario;
@@ -59,12 +54,16 @@ public class UsuarioService {
 			return usuario;
 		}
 		
+		UsuarioServicePermissao.verificaPermissaoAlterarUsuario(usuario.getId());
+		
 		Optional<Usuario> usu = this.usuarioRepository.findById(usuario.getId());
 		
 		if(usu.isEmpty()) {
 			usuario.setNome(null);
 			return usuario;
 		}
+		
+		usuario.setSenha(this.bCrypt.encode(usuario.getSenha()));
 		
 		usuario.setTipo(usu.get().getTipo());
 		
@@ -78,6 +77,10 @@ public class UsuarioService {
 		Optional<Usuario> usuario = this.usuarioRepository.findById(id);
 		
 		if(usuario.isEmpty()) return false;
+		
+		UsuarioServicePermissao.verificaPermissaoExcluirUsuario(usuario.get().getId());
+		
+		//Fazer a ContatoService excluir os contatos do usuario se for do tipo USER
 		
 		this.usuarioRepository.deleteById(id);
 		
@@ -111,5 +114,31 @@ public class UsuarioService {
 		
 		return paginaUsuario;
 	}
+	
+	private static class UsuarioServicePermissao{
+		
+		public static void verificaPermissaoAlterarUsuario(Long id){
+			
+			User user = UserService.getUser();
+			
+			if(user == null || !user.getId().equals(id))
+				throw new AuthorizationException("Usuario não tem permissão para "
+						+ "alterar dados dos outros usuarios");
+		}
+		
+		private static void verificaPermissaoExcluirUsuario(Long id) {
+			
+			User user = UserService.getUser();
+			
+			if(user == null || (user.hasRole("ROLE_USER") && !user.getId().equals(id)) ) {
+				throw new AuthorizationException("Usuário não tem permissão para" 
+					+ "excluir outros usuários");
+			}
+		
+		}
+		
+		
+	}
+	
 	
 }

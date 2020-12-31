@@ -1,6 +1,7 @@
 package com.felipeduarte.agenda.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,6 +25,27 @@ public class UserService implements UserDetailsService{
 		
 		return new User(usuario.getId(),usuario.getNome(),usuario.getEmail(),
 				usuario.getSenha(),usuario.getTipo());
+	}
+	
+	public User loadUserById(Long id) {
+		
+		Usuario usuario = this.usuarioService.buscarPorId(id);
+		
+		if(usuario == null) return null;
+		
+		User user = new User(usuario.getId(),usuario.getNome(),usuario.getEmail(),
+				usuario.getSenha(),usuario.getTipo());
+		
+		return user;
+	}
+	
+	public static User getUser() {
+		try {
+			return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			
+		}catch(Exception e) {
+			return null;
+		}
 	}
 
 }

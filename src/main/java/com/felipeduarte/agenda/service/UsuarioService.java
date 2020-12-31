@@ -8,9 +8,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.felipeduarte.agenda.model.Usuario;
+import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
 import com.felipeduarte.agenda.model.enums.TipoUsuario;
 import com.felipeduarte.agenda.repository.UsuarioRepository;
 
@@ -19,9 +21,14 @@ public class UsuarioService {
 	
 	@Autowired
 	private UsuarioRepository usuarioRepository;
+	
+	@Autowired
+	private BCryptPasswordEncoder bCrypt;
 
 	
-	public Usuario salvar(Usuario usuario) {
+	public Usuario salvar(UsuarioDTO usuarioDTO) {
+		
+		Usuario usuario = Usuario.converteUsuarioDTOParaUsuario(usuarioDTO);
 		
 		Optional<Usuario> usu = this.usuarioRepository.findByEmail(usuario.getEmail());
 		
@@ -30,7 +37,7 @@ public class UsuarioService {
 			return usuario;
 		}
 		
-		//Encriptar a senha aqui
+		usuario.setSenha(this.bCrypt.encode(usuario.getSenha()));
 		
 		Set<Integer> tipos = usuario.getTipo();
 		for(Integer tipo: tipos) {
@@ -43,7 +50,9 @@ public class UsuarioService {
 		return usuario;
 	}
 	
-	public Usuario alterar(Usuario usuario) {
+	public Usuario alterar(UsuarioDTO usuarioDTO) {
+		
+		Usuario usuario = Usuario.converteUsuarioDTOParaUsuario(usuarioDTO);
 		
 		if(usuario.getId() == null) {
 			usuario.setId(null);
@@ -85,9 +94,9 @@ public class UsuarioService {
 		
 	}
 	
-	public Usuario buscarPorEmailESenha(String email,String senha) {
+	public Usuario buscarPorEmail(String email) {
 		
-		Optional<Usuario> usuario = this.usuarioRepository.findByEmailAndSenha(email, senha);
+		Optional<Usuario> usuario = this.usuarioRepository.findByEmail(email);
 		
 		if(usuario.isEmpty()) return null;
 		

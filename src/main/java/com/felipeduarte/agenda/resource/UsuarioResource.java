@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.felipeduarte.agenda.model.Usuario;
+import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
 import com.felipeduarte.agenda.resource.exceptions.ObjectBadRequestException;
 import com.felipeduarte.agenda.resource.exceptions.ObjectNotFoundException;
 import com.felipeduarte.agenda.service.UsuarioService;
@@ -31,9 +32,9 @@ public class UsuarioResource {
 	private UsuarioService usuarioService;
 	
 	@PostMapping
-	public ResponseEntity<Usuario> salvar(@RequestBody @Valid Usuario usuario){
+	public ResponseEntity<Usuario> salvar(@RequestBody @Valid UsuarioDTO usuarioDTO){
 		
-		usuario = this.usuarioService.salvar(usuario);
+		Usuario usuario = this.usuarioService.salvar(usuarioDTO);
 		
 		if(usuario == null) throw new ObjectBadRequestException("Erro ao cadastrar usuário!");
 		
@@ -43,9 +44,9 @@ public class UsuarioResource {
 	}
 	
 	@PutMapping
-	public ResponseEntity<Usuario> alterar(@RequestBody @Valid Usuario usuario){
+	public ResponseEntity<Usuario> alterar(@RequestBody @Valid UsuarioDTO usuarioDTO){
 		
-		usuario = this.usuarioService.alterar(usuario);
+		Usuario usuario = this.usuarioService.alterar(usuarioDTO);
 		
 		if(usuario == null) throw new ObjectBadRequestException("Erro ao alterar usuário!");
 		

@@ -15,11 +15,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
 
 @Entity
 public class Usuario implements Serializable{
@@ -31,22 +29,15 @@ public class Usuario implements Serializable{
 	private Long id;
 	
 	@Column(length = 50)
-	@NotEmpty(message = "Nome é obrigatório")
-	@Size(min = 3, max = 50, message = "Nome deve estar entre 3 a 50 caracteres")
 	private String nome;
 	
 	@Column(length = 80, unique = true)
-	@NotEmpty(message = "Email é obrigatório")
-	@Email(message = "Email inválido!")
-	@Size(max = 80, message = "Email deve ter até 80 caracteres")
 	private String email;
 	
-	@NotEmpty(message = "Senha é obrigatório")
-	@Size(min = 8, max = 16, message = "Senha deve ter entre 8 a 16 caracteres")
+	@JsonIgnore
 	private String senha;
 	
-	@NotEmpty(message = "Tipo do usuário é obrigatório")
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "tipo_usuario")
 	private Set<Integer> tipo = new HashSet<>();
 	
@@ -130,5 +121,18 @@ public class Usuario implements Serializable{
 			return false;
 		return true;
 	}
+	
+	public static Usuario converteUsuarioDTOParaUsuario(UsuarioDTO usuarioDTO) {
+		
+		Usuario usuario = new Usuario();
+		usuario.setId(usuarioDTO.getId());
+		usuario.setNome(usuarioDTO.getNome());
+		usuario.setEmail(usuarioDTO.getEmail());
+		usuario.setSenha(usuarioDTO.getSenha());
+		usuario.setTipo(usuarioDTO.getTipo());
+		
+		return usuario;
+	}
+	
 	
 }

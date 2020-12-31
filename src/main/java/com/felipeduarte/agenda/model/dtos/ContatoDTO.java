@@ -2,7 +2,6 @@ package com.felipeduarte.agenda.model.dtos;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 public class ContatoDTO {
@@ -25,9 +24,6 @@ public class ContatoDTO {
 	@Email(message = "Email inválido!")
 	@Size(max = 80, message = "Email deve ter até 80 caracteres")
 	private String email;
-	
-	@NotNull(message = "Id do usuario é obrigatório")
-	private Long usuario;
 
 	public Long getId() {
 		return id;
@@ -67,14 +63,6 @@ public class ContatoDTO {
 
 	public void setEmail(String email) {
 		this.email = email;
-	}
-
-	public Long getUsuario() {
-		return usuario;
-	}
-
-	public void setUsuario(Long usuario) {
-		this.usuario = usuario;
 	}
 	
 }

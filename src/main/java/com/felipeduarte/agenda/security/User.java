@@ -49,7 +49,7 @@ public class User implements UserDetails{
 		return this.id;
 	}
 	
-	public String nome() {
+	public String getNome() {
 		return this.nome;
 	}
 

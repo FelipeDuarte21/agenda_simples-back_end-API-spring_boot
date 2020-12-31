@@ -12,6 +12,9 @@ import com.felipeduarte.agenda.model.Contato;
 import com.felipeduarte.agenda.model.Usuario;
 import com.felipeduarte.agenda.model.dtos.ContatoDTO;
 import com.felipeduarte.agenda.repository.ContatoRepository;
+import com.felipeduarte.agenda.resource.exceptions.AuthorizationException;
+import com.felipeduarte.agenda.security.User;
+import com.felipeduarte.agenda.security.UserService;
 
 @Service
 public class ContatoService {
@@ -19,23 +22,14 @@ public class ContatoService {
 	@Autowired
 	private ContatoRepository contatoRepository;
 	
-	@Autowired
-	private UsuarioService usuarioService;
-	
 	public Contato salvar(ContatoDTO contatoDTO) {
 		
-		Usuario usuario = this.usuarioService.buscarPorId(contatoDTO.getUsuario());
-		
-		Contato contato;
-		
-		if(usuario == null) {
-			contato = new Contato();
-			contato.setUsuario(null);
-			return contato;
-		}
+		Usuario usuario = ContatoServiceVerificacao.getUsuarioLogado();
 		
 		Optional<Contato> c = this.contatoRepository.findByTelefoneAndCelularAndEmail(
 				contatoDTO.getTelefone(), contatoDTO.getCelular(), contatoDTO.getEmail());
+		
+		Contato contato;
 		
 		if(c.isPresent()) {
 			contato = new Contato();
@@ -69,6 +63,8 @@ public class ContatoService {
 			return contato;
 		}
 		
+		ContatoServiceVerificacao.verificaIdUsuarioIdContato(c.get().getUsuario().getId());
+		
 		contato = Contato.converteContatoDTOParaContato(contatoDTO, c.get().getUsuario());
 		
 		contato = this.contatoRepository.save(contato);
@@ -81,17 +77,17 @@ public class ContatoService {
 		Optional<Contato> contato = this.contatoRepository.findById(id);
 		
 		if(contato.isEmpty()) return false; 
+		
+		ContatoServiceVerificacao.verificaIdUsuarioIdContato(contato.get().getUsuario().getId());
 			
 		this.contatoRepository.delete(contato.get());
 			
 		return true;
 	}
 	
-	public Page<Contato> buscarPorNome(Long idUsuario, String nome,Integer pagina, Integer qtdPorPagina){
+	public Page<Contato> buscarPorNome(String nome,Integer pagina, Integer qtdPorPagina){
 		
-		Usuario usuario = this.usuarioService.buscarPorId(idUsuario);
-		
-		if(usuario == null) return null;
+		Usuario usuario = ContatoServiceVerificacao.getUsuarioLogado();
 		
 		PageRequest pg = PageRequest.of(pagina, qtdPorPagina,Direction.ASC,"nome");
 		
@@ -112,21 +108,55 @@ public class ContatoService {
 		
 		if(contato.isEmpty()) return null;
 		
+		ContatoServiceVerificacao.verificaIdUsuarioIdContato(contato.get().getUsuario().getId());
+		
 		return contato.get();
 		
 	}
 	
-	public Page<Contato> buscarTodos(Long idUsuario, Integer pagina,Integer qtdPorPagina){
+	public Page<Contato> buscarTodos(Integer pagina,Integer qtdPorPagina){
 		
-		Usuario usuario = this.usuarioService.buscarPorId(idUsuario);
-	
-		if(usuario == null) return null;
+		Usuario usuario = ContatoServiceVerificacao.getUsuarioLogado();
 		
 		PageRequest pg = PageRequest.of(pagina, qtdPorPagina,Direction.ASC,"nome");
 		
 		Page<Contato> paginaContatos = this.contatoRepository.findByUsuario(usuario, pg);
 		
 		return paginaContatos;
+	}
+	
+	private static class ContatoServiceVerificacao{
+		
+		public static Usuario getUsuarioLogado() {
+			
+			User user = (User) UserService.getUser();
+			
+			if(user != null) {
+				
+				Usuario u = new Usuario();
+				u.setId(user.getId());
+				u.setNome(user.getNome());
+				u.setEmail(user.getUsername());
+				u.setSenha(user.getPassword());
+				
+				return u;
+				
+			}else {
+				throw new AuthorizationException("Usuário não logado!");
+			}
+			
+		}
+		
+		public static void verificaIdUsuarioIdContato(Long idComparado) {
+			
+			Usuario usuario = getUsuarioLogado();
+			
+			if(!usuario.getId().equals(idComparado)) {
+				throw new AuthorizationException("Este contato não pertence ao usuario logado!");
+			}
+			
+		}
+		
 	}
 	
 }

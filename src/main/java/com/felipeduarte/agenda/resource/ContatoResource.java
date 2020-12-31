@@ -41,9 +41,6 @@ public class ContatoResource {
 		if(contato == null) throw new ObjectBadRequestException("Erro ao cadastrar contato!"); 
 		
 		if(contato.getNome() == null) throw new ObjectBadRequestException("Contato já cadastrado!");
-		
-		if(contato.getUsuario() == null) throw new ObjectNotFoundException(
-				"Usuario não encontrado, verifique o id informado!");
 			
 		return ResponseEntity.status(HttpStatus.CREATED).body(contato);
 	}
@@ -78,17 +75,14 @@ public class ContatoResource {
 	
 	@PreAuthorize("hasAnyRole('USER')")
 	@GetMapping("/search")
-	public ResponseEntity<Page<Contato>> buscarPorNome(@RequestParam Long idUsuario,
+	public ResponseEntity<Page<Contato>> buscarPorNome(
 			@RequestParam String nome,
 			@RequestParam(defaultValue = "0") Integer pagina,
 			@RequestParam(defaultValue = "5") Integer qtdPorPagina){
 		
-		Page<Contato> paginaContatos = this.contatoService.buscarPorNome(idUsuario,nome,pagina,qtdPorPagina);
-		
-		if(paginaContatos == null) throw new ObjectBadRequestException("Erro ao buscar contatos, verifique o id do usuario");
+		Page<Contato> paginaContatos = this.contatoService.buscarPorNome(nome,pagina,qtdPorPagina);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(paginaContatos);
-		
 	}
 	
 	@PreAuthorize("hasAnyRole('USER')")
@@ -104,13 +98,11 @@ public class ContatoResource {
 
 	@PreAuthorize("hasAnyRole('USER')")
 	@GetMapping
-	public ResponseEntity<Page<Contato>> buscarTodos(@RequestParam Long idUsuario,
+	public ResponseEntity<Page<Contato>> buscarTodos(
 			@RequestParam(defaultValue = "0") Integer pagina,
 			@RequestParam(defaultValue = "5") Integer qtdPorPagina){
 		
-		Page<Contato> paginaContatos = this.contatoService.buscarTodos(idUsuario,pagina,qtdPorPagina);
-		
-		if(paginaContatos == null) throw new ObjectBadRequestException("Erro ao buscar contatos, verifique o id do usuario");
+		Page<Contato> paginaContatos = this.contatoService.buscarTodos(pagina,qtdPorPagina);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(paginaContatos);
 	}

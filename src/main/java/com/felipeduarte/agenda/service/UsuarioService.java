@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.felipeduarte.agenda.model.Usuario;
 import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
+import com.felipeduarte.agenda.model.dtos.UsuarioSenhaDTO;
 import com.felipeduarte.agenda.repository.UsuarioRepository;
 import com.felipeduarte.agenda.resource.exceptions.AuthorizationException;
 import com.felipeduarte.agenda.security.User;
@@ -27,7 +28,7 @@ public class UsuarioService {
 	private BCryptPasswordEncoder bCrypt;
 
 	
-	public Usuario salvar(UsuarioDTO usuarioDTO) {
+	public Usuario salvar(UsuarioSenhaDTO usuarioDTO) {
 		
 		Usuario usuario = Usuario.converteUsuarioDTOParaUsuario(usuarioDTO);
 		
@@ -63,9 +64,9 @@ public class UsuarioService {
 			return usuario;
 		}
 		
-		usuario.setSenha(this.bCrypt.encode(usuario.getSenha()));
-		
 		usuario.setTipo(usu.get().getTipo());
+		
+		usuario.setSenha(usu.get().getSenha());
 		
 		usuario = this.usuarioRepository.save(usuario);
 		
@@ -79,8 +80,6 @@ public class UsuarioService {
 		if(usuario.isEmpty()) return false;
 		
 		UsuarioServicePermissao.verificaPermissaoExcluirUsuario(usuario.get().getId());
-		
-		//Fazer a ContatoService excluir os contatos do usuario se for do tipo USER
 		
 		this.usuarioRepository.deleteById(id);
 		
@@ -98,7 +97,6 @@ public class UsuarioService {
 		return usuario.get();
 		
 	}
-	
 	
 	public Usuario buscarPorEmail(String email) {
 		
@@ -156,6 +154,5 @@ public class UsuarioService {
 		
 		
 	}
-	
 	
 }

@@ -83,7 +83,7 @@ public class ContatoService {
 		this.contatoRepository.delete(contato.get());
 			
 		return true;
-	}
+	}	
 	
 	public Page<Contato> buscarPorNome(String nome,Integer pagina, Integer qtdPorPagina){
 		

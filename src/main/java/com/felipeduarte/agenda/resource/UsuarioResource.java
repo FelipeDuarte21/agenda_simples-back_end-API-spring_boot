@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.felipeduarte.agenda.model.Usuario;
 import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
+import com.felipeduarte.agenda.model.dtos.UsuarioSenhaDTO;
 import com.felipeduarte.agenda.resource.exceptions.ObjectBadRequestException;
 import com.felipeduarte.agenda.resource.exceptions.ObjectNotFoundException;
 import com.felipeduarte.agenda.service.UsuarioService;
@@ -33,7 +34,7 @@ public class UsuarioResource {
 	private UsuarioService usuarioService;
 	
 	@PostMapping
-	public ResponseEntity<Usuario> salvar(@RequestBody @Valid UsuarioDTO usuarioDTO){
+	public ResponseEntity<Usuario> salvar(@RequestBody @Valid UsuarioSenhaDTO usuarioDTO){
 		
 		Usuario usuario = this.usuarioService.salvar(usuarioDTO);
 		

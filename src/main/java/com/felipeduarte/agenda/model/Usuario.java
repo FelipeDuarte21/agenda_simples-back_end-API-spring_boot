@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -18,6 +19,7 @@ import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
+import com.felipeduarte.agenda.model.dtos.UsuarioSenhaDTO;
 
 @Entity
 public class Usuario implements Serializable{
@@ -42,7 +44,7 @@ public class Usuario implements Serializable{
 	private Set<Integer> tipo = new HashSet<>();
 	
 	@JsonIgnore
-	@OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
 	private List<Contato> contatos = new ArrayList<>();
 	
 	public Usuario() {
@@ -122,13 +124,24 @@ public class Usuario implements Serializable{
 		return true;
 	}
 	
-	public static Usuario converteUsuarioDTOParaUsuario(UsuarioDTO usuarioDTO) {
+	public static Usuario converteUsuarioDTOParaUsuario(UsuarioSenhaDTO usuarioDTO) {
 		
 		Usuario usuario = new Usuario();
 		usuario.setId(usuarioDTO.getId());
 		usuario.setNome(usuarioDTO.getNome());
 		usuario.setEmail(usuarioDTO.getEmail());
 		usuario.setSenha(usuarioDTO.getSenha());
+		usuario.setTipo(usuarioDTO.getTipo());
+		
+		return usuario;
+	}
+	
+	public static Usuario converteUsuarioDTOParaUsuario(UsuarioDTO usuarioDTO) {
+		
+		Usuario usuario = new Usuario();
+		usuario.setId(usuarioDTO.getId());
+		usuario.setNome(usuarioDTO.getNome());
+		usuario.setEmail(usuarioDTO.getEmail());
 		usuario.setTipo(usuarioDTO.getTipo());
 		
 		return usuario;

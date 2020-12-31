@@ -29,7 +29,7 @@ public class UserService implements UserDetailsService{
 	
 	public User loadUserById(Long id) {
 		
-		Usuario usuario = this.usuarioService.buscarPorId(id);
+		Usuario usuario = this.usuarioService.buscarPorId(id,false);
 		
 		if(usuario == null) return null;
 		

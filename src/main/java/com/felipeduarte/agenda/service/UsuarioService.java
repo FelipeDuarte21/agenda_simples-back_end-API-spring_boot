@@ -87,15 +87,18 @@ public class UsuarioService {
 		return true;
 	}
 	
-	public Usuario buscarPorId(Long id) {
+	public Usuario buscarPorId(Long id, boolean verificaPermissao) {
 		
 		Optional<Usuario> usuario = this.usuarioRepository.findById(id);
 		
 		if(usuario.isEmpty()) return null;
 		
+		if(verificaPermissao) UsuarioServicePermissao.verificaIdUsuario(usuario.get().getId());
+		
 		return usuario.get();
 		
 	}
+	
 	
 	public Usuario buscarPorEmail(String email) {
 		
@@ -126,7 +129,7 @@ public class UsuarioService {
 						+ "alterar dados dos outros usuarios");
 		}
 		
-		private static void verificaPermissaoExcluirUsuario(Long id) {
+		public static void verificaPermissaoExcluirUsuario(Long id) {
 			
 			User user = UserService.getUser();
 			
@@ -135,6 +138,20 @@ public class UsuarioService {
 					+ "excluir outros usuários");
 			}
 		
+		}
+		
+		public static void verificaIdUsuario(Long id) {
+			
+			User user = UserService.getUser();
+			
+			if(user == null) {
+				throw new AuthorizationException("Usuario não logado!");
+			}
+			
+			if(!user.getId().equals(id)) {
+				throw new AuthorizationException("Este id não pertence ao usuario logado!");
+			}
+			
 		}
 		
 		

@@ -70,6 +70,16 @@ public class UsuarioResource {
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
+	@GetMapping("/{id}")
+	public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id){
+		
+		Usuario usuario = this.usuarioService.buscarPorId(id,true);
+		
+		if(usuario == null) throw new ObjectNotFoundException("Usuário não encontrado, verifique o id informado!");
+		
+		return ResponseEntity.status(HttpStatus.OK).body(usuario);
+	}
+	
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping

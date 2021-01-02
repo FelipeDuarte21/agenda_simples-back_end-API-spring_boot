@@ -40,7 +40,14 @@ public class JWTUtil {
 	public String getId(String token) {
 		Claims claims = getClaims(token);
 		if(claims != null) {
-			String id = claims.getSubject();
+			String jsonUser = claims.getSubject();
+			
+			String[] parts = jsonUser.split(",");
+			
+			parts = parts[1].split(":");
+			
+			String id = parts[1];
+			
 			return id;
 		}
 		return null;

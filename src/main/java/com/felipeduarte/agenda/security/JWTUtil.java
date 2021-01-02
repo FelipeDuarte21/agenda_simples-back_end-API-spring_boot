@@ -1,7 +1,9 @@
 package com.felipeduarte.agenda.security;
 
 import java.util.Date;
+import java.util.stream.Collectors;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,10 +20,17 @@ public class JWTUtil {
 	@Value("${jwt.expiration}")
 	private Long expiration;
 	
-	public String generatedToken(String id) {
+	public String generatedToken(User user) {
+		
+		JSONObject jo = new JSONObject();
+		jo.put("id", user.getId());
+		jo.put("nome", user.getNome());
+		jo.put("email", user.getUsername());
+		jo.put("perfil", user.getAuthorities().stream()
+				.map(g -> g.getAuthority()).collect(Collectors.toList()));
 		
 		return Jwts.builder()
-				.setSubject(id)
+				.setSubject(jo.toString())
 				.setExpiration(new Date(System.currentTimeMillis() + this.expiration))
 				.signWith(SignatureAlgorithm.HS512 ,this.secret.getBytes())
 				.compact();

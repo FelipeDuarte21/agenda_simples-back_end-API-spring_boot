@@ -47,7 +47,7 @@ public class ContatoResource {
 	
 	@PreAuthorize("hasAnyRole('USER')")
 	@PutMapping
-	public ResponseEntity<Contato> alterar(@RequestBody ContatoDTO contatoDTO){
+	public ResponseEntity<Contato> alterar(@RequestBody @Valid ContatoDTO contatoDTO){
 		
 		Contato contato = this.contatoService.alterar(contatoDTO);
 		

@@ -63,7 +63,7 @@ public class ContatoService {
 			return contato;
 		}
 		
-		ContatoServiceVerificacao.verificaIdUsuarioIdContato(c.get().getUsuario().getId());
+		//ContatoServiceVerificacao.verificaIdUsuarioIdContato(c.get().getUsuario().getId());
 		
 		contato = Contato.converteContatoDTOParaContato(contatoDTO, c.get().getUsuario());
 		
@@ -148,7 +148,6 @@ public class ContatoService {
 		}
 		
 		public static void verificaIdUsuarioIdContato(Long idComparado) {
-			
 			Usuario usuario = getUsuarioLogado();
 			
 			if(!usuario.getId().equals(idComparado)) {

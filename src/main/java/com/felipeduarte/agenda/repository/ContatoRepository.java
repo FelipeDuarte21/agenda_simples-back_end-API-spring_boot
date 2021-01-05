@@ -13,7 +13,8 @@ import com.felipeduarte.agenda.model.Usuario;
 @Repository
 public interface ContatoRepository extends JpaRepository<Contato,Long>{
 	
-	public Optional<Contato> findByTelefoneAndCelularAndEmail(String telefone,String celular,String email);
+	public Optional<Contato> findByTelefoneAndCelularAndEmailAndUsuario(String telefone,String celular,
+			String email, Usuario usuario);
 	
 	public Page<Contato> findByUsuarioAndNomeContaining(Usuario usuario, String nome,Pageable pagina);
 	

@@ -26,8 +26,8 @@ public class ContatoService {
 		
 		Usuario usuario = ContatoServiceVerificacao.getUsuarioLogado();
 		
-		Optional<Contato> c = this.contatoRepository.findByTelefoneAndCelularAndEmail(
-				contatoDTO.getTelefone(), contatoDTO.getCelular(), contatoDTO.getEmail());
+		Optional<Contato> c = this.contatoRepository.findByTelefoneAndCelularAndEmailAndUsuario(
+			contatoDTO.getTelefone(), contatoDTO.getCelular(), contatoDTO.getEmail(), usuario);
 		
 		Contato contato;
 		

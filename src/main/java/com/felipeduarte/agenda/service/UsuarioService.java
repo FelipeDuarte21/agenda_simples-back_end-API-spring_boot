@@ -107,6 +107,21 @@ public class UsuarioService {
 		return usuario.get();
 	}
 	
+	public Page<Usuario> buscarPorNome(String nome, Integer pagina, Integer qtdPorPagina){
+		
+		PageRequest page = PageRequest.of(pagina, qtdPorPagina,Sort.by(Direction.ASC, "nome"));
+		
+		Page<Usuario> paginaUsuario = this.usuarioRepository.findByNomeContaining(nome, page);
+		
+		if(!nome.isEmpty()) {
+			paginaUsuario = this.usuarioRepository.findByNomeContaining(nome, page);
+		}else {
+			paginaUsuario = this.usuarioRepository.findAll(page);
+		}
+		
+		return paginaUsuario;
+	}
+	
 	public Page<Usuario> buscarTodos(Integer pagina, Integer qtdPorPagina){
 		
 		PageRequest page = PageRequest.of(pagina, qtdPorPagina,Sort.by(Direction.ASC, "nome"));

@@ -71,14 +71,15 @@ public class UsuarioResource {
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
-	@GetMapping("/{id}")
-	public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id){
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@GetMapping("/search")
+	public ResponseEntity<Page<Usuario>> buscarPorNome(@RequestParam String nome,
+			@RequestParam(defaultValue = "0") Integer pagina, 
+			@RequestParam(defaultValue = "4") Integer qtdPorPagina){
 		
-		Usuario usuario = this.usuarioService.buscarPorId(id,true);
+		Page<Usuario> paginaUsuario = this.usuarioService.buscarPorNome(nome, pagina, qtdPorPagina);
 		
-		if(usuario == null) throw new ObjectNotFoundException("Usuário não encontrado, verifique o id informado!");
-		
-		return ResponseEntity.status(HttpStatus.OK).body(usuario);
+		return ResponseEntity.status(HttpStatus.OK).body(paginaUsuario);
 	}
 	
 	
@@ -90,8 +91,7 @@ public class UsuarioResource {
 		
 		Page<Usuario> paginaUsuario = this.usuarioService.buscarTodos(pagina, qtdPorPagina);
 		
-		return ResponseEntity.status(HttpStatus.OK).body(paginaUsuario);
-		
+		return ResponseEntity.status(HttpStatus.OK).body(paginaUsuario);	
 	}
 
 }

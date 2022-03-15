@@ -4,7 +4,9 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -17,94 +19,162 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import com.felipeduarte.agenda.model.Contato;
 import com.felipeduarte.agenda.model.dtos.ContatoDTO;
+import com.felipeduarte.agenda.model.dtos.ContatoSalvarDTO;
 import com.felipeduarte.agenda.resource.exceptions.ObjectBadRequestException;
 import com.felipeduarte.agenda.resource.exceptions.ObjectNotFoundException;
 import com.felipeduarte.agenda.service.ContatoService;
+import com.felipeduarte.agenda.service.exceptions.IllegalParameterException;
+import com.felipeduarte.agenda.service.exceptions.ObjectNotFoundFromParameterException;
+
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 @CrossOrigin
 @RestController
-@RequestMapping("/contato")
+@RequestMapping("/api/contatos")
 public class ContatoResource {
 	
-	@Autowired
 	private ContatoService contatoService;
 	
-	@PreAuthorize("hasAnyRole('USER')")
-	@PostMapping
-	public ResponseEntity<Contato> salvar(@RequestBody @Valid ContatoDTO contatoDTO){
-		
-		Contato contato = this.contatoService.salvar(contatoDTO);
-		
-		if(contato == null) throw new ObjectBadRequestException("Erro ao cadastrar contato!"); 
-		
-		if(contato.getNome() == null) throw new ObjectBadRequestException("Contato já cadastrado!");
-			
-		return ResponseEntity.status(HttpStatus.CREATED).body(contato);
+	@Autowired
+	public ContatoResource(ContatoService contatoService) {
+		this.contatoService = contatoService;
 	}
 	
+	@ApiOperation(value = "Cadastra um novo contato")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Contato cadastrado com sucesso"),
+			@ApiResponse(code = 400, message = "Erro nos parâmetros recebidos"),
+			@ApiResponse(code = 403, message = "Acesso negado")
+	})
 	@PreAuthorize("hasAnyRole('USER')")
-	@PutMapping
-	public ResponseEntity<Contato> alterar(@RequestBody @Valid ContatoDTO contatoDTO){
+	@PostMapping(produces = "application/json", consumes = "application/json")
+	public ResponseEntity<ContatoDTO> salvar(@RequestBody @Valid ContatoSalvarDTO contatoDTO,
+			UriComponentsBuilder uriBuilder){
 		
-		Contato contato = this.contatoService.alterar(contatoDTO);
-		
-		if(contato == null) throw new ObjectBadRequestException("Erro ao alterar contato");
-		
-		if(contato.getId() == null) throw new ObjectBadRequestException("Id não informado!");
-		
-		if(contato.getNome() == null) throw new ObjectNotFoundException(
-				"Contato não encontrado, verifique id informado!");
+		try {
 			
-		return ResponseEntity.status(HttpStatus.OK).body(contato);
+			var contato = this.contatoService.salvar(contatoDTO);
+			
+			var uri = uriBuilder.path("/api/contatos/{id}")
+					.buildAndExpand(contato.getId()).toUri();
+			
+			return ResponseEntity.created(uri).body(contato);
+			
+		}catch(IllegalParameterException ex) {
+			throw new ObjectBadRequestException(ex.getMessage());
+			
+		}
+		
 	}
 	
+	@ApiOperation(value = "Atualiza um contato")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Contato atualizado com sucesso"),
+			@ApiResponse(code = 401, message = "Acesso não autorizado"),
+			@ApiResponse(code = 403, message = "Acesso negado"),
+			@ApiResponse(code = 404, message = "Contato não encontrado"),
+	})
+	@PreAuthorize("hasAnyRole('USER')")
+	@PutMapping(value = "{id}", produces = "application/json", consumes = "application/json")
+	public ResponseEntity<ContatoDTO> alterar(@PathVariable(name = "id") Long id, 
+			@RequestBody @Valid ContatoSalvarDTO contatoDTO){
+		
+		try {
+			
+			var contato = this.contatoService.alterar(id, contatoDTO);
+			
+			return ResponseEntity.ok(contato);
+			
+		}catch (ObjectNotFoundFromParameterException ex) {
+			throw new ObjectNotFoundException(ex.getMessage());
+			
+		}
+		
+	}
+	
+	@ApiOperation(value = "Exclui um contato")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Contato excluido com sucesso"),
+			@ApiResponse(code = 401, message = "Acesso não autorizado"),
+			@ApiResponse(code = 403, message = "Acesso negado"),
+			@ApiResponse(code = 404, message = "Usuario não encontrado"),
+	})
 	@PreAuthorize("hasAnyRole('USER')")
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> excluir(@PathVariable Long id){
 		
-		boolean resp = this.contatoService.excluir(id);
-		
-		if(resp == false) throw new ObjectNotFoundException(
-				"Contato não encontrado, verifique o id informado!");
-		
-		return ResponseEntity.status(HttpStatus.OK).build();
-	}
-	
-	@PreAuthorize("hasAnyRole('USER')")
-	@GetMapping("/search")
-	public ResponseEntity<Page<Contato>> buscarPorNome(
-			@RequestParam String nome,
-			@RequestParam(defaultValue = "0") Integer pagina,
-			@RequestParam(defaultValue = "5") Integer qtdPorPagina){
-		
-		Page<Contato> paginaContatos = this.contatoService.buscarPorNome(nome,pagina,qtdPorPagina);
-		
-		return ResponseEntity.status(HttpStatus.OK).body(paginaContatos);
-	}
-	
-	@PreAuthorize("hasAnyRole('USER')")
-	@GetMapping("/{id}")
-	public ResponseEntity<Contato> buscarPorId(@PathVariable Long id){
-		
-		Contato contato = this.contatoService.buscarPorId(id);
-		
-		if(contato == null) throw new ObjectNotFoundException("Contato não encontrado!");
+		try {
 			
-		return ResponseEntity.status(HttpStatus.OK).body(contato);
+			this.contatoService.excluir(id);
+			
+			return ResponseEntity.ok().build();
+			
+		}catch (ObjectNotFoundFromParameterException ex) {
+			throw new ObjectNotFoundException(ex.getMessage());
+			
+		}
+		
+	}
+	
+	@ApiOperation(value = "Busca uma pagina de contatos por nome")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Pagina encontrada com sucesso"),
+			@ApiResponse(code = 403, message = "Acesso negado")
+	})
+	@PreAuthorize("hasAnyRole('USER')")
+	@GetMapping(value = "/nome", produces = "application/json")
+	public ResponseEntity<Page<ContatoDTO>> buscarPorNome(@RequestParam(name = "value", defaultValue = "") String nome,
+			@PageableDefault(page = 0, size = 10, direction = Direction.ASC, sort = "nome") Pageable paginacao){
+		
+		var paginaContatos = this.contatoService.buscarPorNome(nome,paginacao);
+		
+		return ResponseEntity.ok(paginaContatos);
+		
+	}
+	
+	@ApiOperation(value = "Buscar um contato pela identificação")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Contato encontrado com sucesso"),
+			@ApiResponse(code = 401, message = "Acesso não autorizado"),
+			@ApiResponse(code = 403, message = "Acesso negado"),
+			@ApiResponse(code = 404, message = "Contato não encontrado"),
+	})
+	@PreAuthorize("hasAnyRole('USER')")
+	@GetMapping(value = "/{id}", produces = "application/json")
+	public ResponseEntity<ContatoDTO> buscarPorId(@PathVariable(name = "id") Long id){
+		
+		try {
+			
+			var contato = this.contatoService.buscarPorId(id);
+			
+			return ResponseEntity.ok(contato);
+			
+		}catch (ObjectNotFoundFromParameterException ex) {
+			throw new ObjectNotFoundException(ex.getMessage());
+			
+		}
+		
 	}
 
+	@ApiOperation(value = "Busca uma pagina de contatos")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Pagina encontrada com sucesso"),
+			@ApiResponse(code = 403, message = "Acesso negado")
+	})
 	@PreAuthorize("hasAnyRole('USER')")
-	@GetMapping
-	public ResponseEntity<Page<Contato>> buscarTodos(
-			@RequestParam(defaultValue = "0") Integer pagina,
-			@RequestParam(defaultValue = "5") Integer qtdPorPagina){
+	@GetMapping(produces = "application/json")
+	public ResponseEntity<Page<ContatoDTO>> buscarTodos(
+			@PageableDefault(page = 0, size = 10, direction = Direction.ASC, sort = "nome") Pageable paginacao){
 		
-		Page<Contato> paginaContatos = this.contatoService.buscarTodos(pagina,qtdPorPagina);
+		var paginaContatos = this.contatoService.buscarTodos(paginacao);
 		
-		return ResponseEntity.status(HttpStatus.OK).body(paginaContatos);
+		return ResponseEntity.ok(paginaContatos);
+		
 	}
 	
 }

@@ -3,28 +3,33 @@ package com.felipeduarte.agenda.model.dtos;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import com.felipeduarte.agenda.model.Usuario;
+
+import io.swagger.annotations.ApiModelProperty;
 
 public class UsuarioDTO {
-
+	
+	@ApiModelProperty(value = "Identificação do usuario")
 	private Long id;
 	
-	@NotEmpty(message = "Nome é obrigatório")
-	@Size(min = 3, max = 50, message = "Nome deve estar entre 3 a 50 caracteres")
+	@ApiModelProperty(value = "Nome do usuario")
 	private String nome;
 	
-	@NotEmpty(message = "Email é obrigatório")
-	@Email(message = "Email inválido!")
-	@Size(max = 80, message = "Email deve ter até 80 caracteres")
+	@ApiModelProperty(value = "Email do usuario")
 	private String email;
 	
-	@NotEmpty(message = "Tipo do usuário é obrigatório")
+	@ApiModelProperty(value = "Perfis do usuário")
 	private Set<Integer> tipo = new HashSet<>();
 	
 	public UsuarioDTO() {
 		
+	}
+	
+	public UsuarioDTO(Usuario usuario) {
+		this.id = usuario.getId();
+		this.nome = usuario.getNome();
+		this.email = usuario.getEmail();
+		this.tipo = usuario.getTipo();
 	}
 
 	public Long getId() {
@@ -58,5 +63,5 @@ public class UsuarioDTO {
 	public void setTipo(Set<Integer> tipo) {
 		this.tipo = tipo;
 	}
-	
+
 }

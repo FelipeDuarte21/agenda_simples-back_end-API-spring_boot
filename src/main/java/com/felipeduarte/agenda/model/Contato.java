@@ -10,12 +10,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.felipeduarte.agenda.model.dtos.ContatoDTO;
+import com.felipeduarte.agenda.model.dtos.ContatoSalvarDTO;
 
 @Entity
 public class Contato implements Serializable{
@@ -27,33 +23,30 @@ public class Contato implements Serializable{
 	private Long id;
 	
 	@Column(length = 50)
-	@NotEmpty(message = "Nome é obrigatório")
-	@Size(min = 3, max = 50, message = "Nome deve estar entre 3 a 50 caracteres")
 	private String nome;
 	
 	@Column(length = 10)
-	@NotEmpty(message = "Telefone é obrigatório")
-	@Size(min = 10, max = 10, message = "Telefone são necessariamente 10 caracteres")
 	private String telefone;
 	
 	@Column(length = 11)
-	@NotEmpty(message = "Celular é obrigatório")
-	@Size(min = 11, max = 11, message = "Celular são necessariamente 10 caracteres")
 	private String celular;
 	
 	@Column(length = 80)
-	@NotEmpty(message = "Email é obrigatório")
-	@Email(message = "Email inválido!")
-	@Size(max = 80, message = "Email deve ter até 80 caracteres")
 	private String email;
 	
-	@JsonIgnore
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_usuario")
 	private Usuario usuario;
 	
 	public Contato() {
 		
+	}
+	
+	public Contato(ContatoSalvarDTO contatoDTO) {
+		this.nome = contatoDTO.getNome();
+		this.telefone = contatoDTO.getTelefone();
+		this.celular = contatoDTO.getCelular();
+		this.email = contatoDTO.getEmail();
 	}
 
 	public Long getId() {
@@ -127,18 +120,6 @@ public class Contato implements Serializable{
 		} else if (!id.equals(other.id))
 			return false;
 		return true;
-	}
-	
-	public static Contato converteContatoDTOParaContato(ContatoDTO contato, Usuario usuario) {
-		Contato c = new Contato();
-		c.setId(contato.getId()); 
-		c.setNome(contato.getNome());
-		c.setTelefone(contato.getTelefone());
-		c.setCelular(contato.getCelular());
-		c.setEmail(contato.getEmail());
-		c.setUsuario(usuario);
-		
-		return c;
 	}
 
 }

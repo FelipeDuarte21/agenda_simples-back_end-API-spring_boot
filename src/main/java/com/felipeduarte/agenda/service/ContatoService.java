@@ -1,128 +1,128 @@
 package com.felipeduarte.agenda.service;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.felipeduarte.agenda.model.Contato;
 import com.felipeduarte.agenda.model.Usuario;
 import com.felipeduarte.agenda.model.dtos.ContatoDTO;
+import com.felipeduarte.agenda.model.dtos.ContatoSalvarDTO;
 import com.felipeduarte.agenda.repository.ContatoRepository;
 import com.felipeduarte.agenda.resource.exceptions.AuthorizationException;
 import com.felipeduarte.agenda.security.User;
 import com.felipeduarte.agenda.security.UserService;
+import com.felipeduarte.agenda.service.exceptions.IllegalParameterException;
+import com.felipeduarte.agenda.service.exceptions.ObjectNotFoundFromParameterException;
 
 @Service
 public class ContatoService {
 	
-	@Autowired
 	private ContatoRepository contatoRepository;
 	
-	public Contato salvar(ContatoDTO contatoDTO) {
+	@Autowired
+	public ContatoService(ContatoRepository contatoRepository) {
+		this.contatoRepository = contatoRepository;
+	}
+	
+	public ContatoDTO salvar(ContatoSalvarDTO contatoDTO) {
 		
-		Usuario usuario = ContatoServiceVerificacao.getUsuarioLogado();
+		//Recupera usuario logado
+		var usuario = ContatoServiceVerificacao.getUsuarioLogado();
 		
-		Optional<Contato> c = this.contatoRepository.findByTelefoneAndCelularAndEmailAndUsuario(
-			contatoDTO.getTelefone(), contatoDTO.getCelular(), contatoDTO.getEmail(), usuario);
+		var optContato = this.contatoRepository.findByTelefoneAndCelularAndEmailAndUsuario(
+				contatoDTO.getTelefone(), contatoDTO.getCelular(), contatoDTO.getEmail(), usuario);
 		
-		Contato contato;
+		if(optContato.isPresent())
+			throw new IllegalParameterException("Erro! Contato já cadastrado!");
 		
-		if(c.isPresent()) {
-			contato = new Contato();
-			contato.setNome(null);
-			return contato;
-		}
 		
-		contato = Contato.converteContatoDTOParaContato(contatoDTO, usuario);
+		var contato = new Contato(contatoDTO);
+		contato.setUsuario(usuario);
 		
 		contato = this.contatoRepository.save(contato);
 		
-		return contato;
+		return new ContatoDTO(contato);
+		
 	}
 	
-	public Contato alterar(ContatoDTO contatoDTO) {
+	public ContatoDTO alterar(Long id, ContatoSalvarDTO contatoDTO) {
 		
-		Contato contato;
+		var optContato = this.contatoRepository.findById(id);
 		
-		if(contatoDTO.getId() == null) {
-			contato = new Contato();
-			contato.setId(null);
-			return contato;
-		}
+		if(!optContato.isPresent())
+			throw new ObjectNotFoundFromParameterException("Erro! contato não encontrado para o id informado!");
 	
-		Optional<Contato> c = this.contatoRepository.findById(contatoDTO.getId());
+		//Verifica se o contato pertence ao usuario
+		ContatoServiceVerificacao.verificaIdUsuarioIdContato(optContato.get().getUsuario().getId());
 		
-		if(c.isEmpty()) {
-			contato = new Contato();
-			contato.setId(0L);
-			contato.setNome(null);
-			return contato;
-		}
-		
-		//ContatoServiceVerificacao.verificaIdUsuarioIdContato(c.get().getUsuario().getId());
-		
-		contato = Contato.converteContatoDTOParaContato(contatoDTO, c.get().getUsuario());
+		var contato = optContato.get();
+		contato.setNome(contatoDTO.getNome());
+		contato.setEmail(contatoDTO.getEmail());
+		contato.setTelefone(contatoDTO.getTelefone());
+		contato.setCelular(contatoDTO.getCelular());
 		
 		contato = this.contatoRepository.save(contato);
 		
-		return contato;
+		return new ContatoDTO(contato);
+		
 	}
 	
-	public boolean excluir(Long id) {
+	public void excluir(Long id) {
 		
-		Optional<Contato> contato = this.contatoRepository.findById(id);
+		var optContato = this.contatoRepository.findById(id);
 		
-		if(contato.isEmpty()) return false; 
-		
-		ContatoServiceVerificacao.verificaIdUsuarioIdContato(contato.get().getUsuario().getId());
+		if(!optContato.isPresent())
+			throw new ObjectNotFoundFromParameterException("Erro! contato não encontrado para o id informado!");
+	
+		//Verifica se o contato pertence ao usuario
+		ContatoServiceVerificacao.verificaIdUsuarioIdContato(optContato.get().getUsuario().getId());
 			
-		this.contatoRepository.delete(contato.get());
+		this.contatoRepository.delete(optContato.get());
 			
-		return true;
 	}	
 	
-	public Page<Contato> buscarPorNome(String nome,Integer pagina, Integer qtdPorPagina){
+	public Page<ContatoDTO> buscarPorNome(String nome, Pageable paginacao){
 		
-		Usuario usuario = ContatoServiceVerificacao.getUsuarioLogado();
-		
-		PageRequest pg = PageRequest.of(pagina, qtdPorPagina,Direction.ASC,"nome");
+		var usuario = ContatoServiceVerificacao.getUsuarioLogado();
 		
 		Page<Contato> paginaContatos;
 		
 		if(!nome.isEmpty()) {
-			paginaContatos = this.contatoRepository.findByUsuarioAndNomeContaining(usuario, nome, pg);
+			paginaContatos = this.contatoRepository.findByUsuarioAndNomeContaining(usuario, nome, paginacao);
+			
 		}else {
-			paginaContatos = this.contatoRepository.findByUsuario(usuario, pg);
+			paginaContatos = this.contatoRepository.findByUsuario(usuario, paginacao);
+			
 		}
 			
-		return paginaContatos;
-	}
-	
-	public Contato buscarPorId(Long id){
-		
-		Optional<Contato> contato = this.contatoRepository.findById(id);
-		
-		if(contato.isEmpty()) return null;
-		
-		ContatoServiceVerificacao.verificaIdUsuarioIdContato(contato.get().getUsuario().getId());
-		
-		return contato.get();
+		return paginaContatos.map(ContatoDTO::new);
 		
 	}
 	
-	public Page<Contato> buscarTodos(Integer pagina,Integer qtdPorPagina){
+	public ContatoDTO buscarPorId(Long id){
 		
-		Usuario usuario = ContatoServiceVerificacao.getUsuarioLogado();
+		var optContato = this.contatoRepository.findById(id);
 		
-		PageRequest pg = PageRequest.of(pagina, qtdPorPagina,Direction.ASC,"nome");
+		if(!optContato.isPresent())
+			throw new ObjectNotFoundFromParameterException("Erro! contato não encontrado para o id informado!");
+	
+		//Verifica se o contato pertence ao usuario
+		ContatoServiceVerificacao.verificaIdUsuarioIdContato(optContato.get().getUsuario().getId());
 		
-		Page<Contato> paginaContatos = this.contatoRepository.findByUsuario(usuario, pg);
+		return new ContatoDTO(optContato.get());
 		
-		return paginaContatos;
+	}
+	
+	public Page<ContatoDTO> buscarTodos(Pageable paginacao){
+		
+		var usuario = ContatoServiceVerificacao.getUsuarioLogado();
+		
+		var paginaContatos = this.contatoRepository.findByUsuario(usuario, paginacao);
+		
+		return paginaContatos.map(ContatoDTO::new);
+		
 	}
 	
 	private static class ContatoServiceVerificacao{

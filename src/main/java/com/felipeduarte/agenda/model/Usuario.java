@@ -17,9 +17,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
-import com.felipeduarte.agenda.model.dtos.UsuarioSenhaDTO;
+import com.felipeduarte.agenda.model.dtos.UsuarioSalvarDTO;
 
 @Entity
 public class Usuario implements Serializable{
@@ -36,19 +34,24 @@ public class Usuario implements Serializable{
 	@Column(length = 80, unique = true)
 	private String email;
 	
-	@JsonIgnore
 	private String senha;
 	
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "tipo_usuario")
 	private Set<Integer> tipo = new HashSet<>();
 	
-	@JsonIgnore
 	@OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
 	private List<Contato> contatos = new ArrayList<>();
 	
 	public Usuario() {
 		
+	}
+	
+	public Usuario(UsuarioSalvarDTO usuarioDTO) {
+		this.nome = usuarioDTO.getNome();
+		this.email = usuarioDTO.getEmail();
+		this.senha = usuarioDTO.getSenha();
+		this.tipo = usuarioDTO.getTipo();
 	}
 
 	public Long getId() {
@@ -123,29 +126,5 @@ public class Usuario implements Serializable{
 			return false;
 		return true;
 	}
-	
-	public static Usuario converteUsuarioDTOParaUsuario(UsuarioSenhaDTO usuarioDTO) {
-		
-		Usuario usuario = new Usuario();
-		usuario.setId(usuarioDTO.getId());
-		usuario.setNome(usuarioDTO.getNome());
-		usuario.setEmail(usuarioDTO.getEmail());
-		usuario.setSenha(usuarioDTO.getSenha());
-		usuario.setTipo(usuarioDTO.getTipo());
-		
-		return usuario;
-	}
-	
-	public static Usuario converteUsuarioDTOParaUsuario(UsuarioDTO usuarioDTO) {
-		
-		Usuario usuario = new Usuario();
-		usuario.setId(usuarioDTO.getId());
-		usuario.setNome(usuarioDTO.getNome());
-		usuario.setEmail(usuarioDTO.getEmail());
-		usuario.setTipo(usuarioDTO.getTipo());
-		
-		return usuario;
-	}
-	
 	
 }

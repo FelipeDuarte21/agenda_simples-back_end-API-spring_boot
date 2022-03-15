@@ -1,134 +1,143 @@
 package com.felipeduarte.agenda.service;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.felipeduarte.agenda.model.Usuario;
 import com.felipeduarte.agenda.model.dtos.UsuarioDTO;
-import com.felipeduarte.agenda.model.dtos.UsuarioSenhaDTO;
+import com.felipeduarte.agenda.model.dtos.UsuarioSalvarDTO;
 import com.felipeduarte.agenda.repository.UsuarioRepository;
 import com.felipeduarte.agenda.resource.exceptions.AuthorizationException;
 import com.felipeduarte.agenda.security.User;
 import com.felipeduarte.agenda.security.UserService;
+import com.felipeduarte.agenda.service.exceptions.IllegalParameterException;
+import com.felipeduarte.agenda.service.exceptions.ObjectNotFoundFromParameterException;
 
 @Service
 public class UsuarioService {
 	
-	@Autowired
 	private UsuarioRepository usuarioRepository;
 	
-	@Autowired
 	private BCryptPasswordEncoder bCrypt;
-
 	
-	public Usuario salvar(UsuarioSenhaDTO usuarioDTO) {
+	@Autowired
+	public UsuarioService(UsuarioRepository usuarioRepository, BCryptPasswordEncoder bCrypt) {
+		this.usuarioRepository = usuarioRepository;
+		this.bCrypt = bCrypt;
+	}
+	
+	public UsuarioDTO salvar(UsuarioSalvarDTO usuarioDTO) {
 		
-		Usuario usuario = Usuario.converteUsuarioDTOParaUsuario(usuarioDTO);
+		var optUsuario = this.usuarioRepository.findByEmail(usuarioDTO.getEmail());
 		
-		Optional<Usuario> usu = this.usuarioRepository.findByEmail(usuario.getEmail());
+		if(optUsuario.isPresent())
+			throw new IllegalParameterException("Erro! usuário já cadastrado!");
 		
-		if(usu.isPresent()) {
-			usuario.setEmail(null);
-			return usuario;
-		}
+		var usuario = new Usuario(usuarioDTO);
 		
 		usuario.setSenha(this.bCrypt.encode(usuario.getSenha()));
 		
 		usuario = this.usuarioRepository.save(usuario);
 		
-		return usuario;
+		return new UsuarioDTO(usuario);
+		
 	}
 	
-	public Usuario alterar(UsuarioDTO usuarioDTO) {
+	public UsuarioDTO alterar(Long id, UsuarioSalvarDTO usuarioDTO) {
 		
-		Usuario usuario = Usuario.converteUsuarioDTOParaUsuario(usuarioDTO);
+		var optUsuario = this.usuarioRepository.findById(id);
 		
-		if(usuario.getId() == null) {
-			usuario.setId(null);
-			return usuario;
+		if(!optUsuario.isPresent())
+			throw new ObjectNotFoundFromParameterException("Erro! usuário não encontrado para o id informado!");
+		
+		//Verifica permissão para alterar
+		UsuarioServicePermissao.verificaPermissaoAlterarUsuario(id);
+		
+		try {
+			
+			var optUsuarioEmail = this.usuarioRepository.findByEmail(optUsuario.get().getEmail());
+			
+			if(optUsuarioEmail.isPresent()) //verifica se o email pertence o usuario
+				UsuarioServicePermissao.verificaIdUsuario(optUsuarioEmail.get().getId());
+			
+		}catch(AuthorizationException ex) {
+			throw new IllegalParameterException("Erro! email já cadastrado!");
+			
 		}
 		
-		UsuarioServicePermissao.verificaPermissaoAlterarUsuario(usuario.getId());
-		
-		Optional<Usuario> usu = this.usuarioRepository.findById(usuario.getId());
-		
-		if(usu.isEmpty()) {
-			usuario.setNome(null);
-			return usuario;
-		}
-		
-		usuario.setTipo(usu.get().getTipo());
-		
-		usuario.setSenha(usu.get().getSenha());
+		var usuario = optUsuario.get();
+		usuario.setNome(usuarioDTO.getNome());
+		usuario.setEmail(usuarioDTO.getEmail());
+		usuario.setTipo(usuarioDTO.getTipo());
 		
 		usuario = this.usuarioRepository.save(usuario);
 		
-		return usuario;
-	}
-	
-	public boolean excluir(Long id) {
-	
-		Optional<Usuario> usuario = this.usuarioRepository.findById(id);
-		
-		if(usuario.isEmpty()) return false;
-		
-		UsuarioServicePermissao.verificaPermissaoExcluirUsuario(usuario.get().getId());
-		
-		this.usuarioRepository.deleteById(id);
-		
-		return true;
-	}
-	
-	public Usuario buscarPorId(Long id, boolean verificaPermissao) {
-		
-		Optional<Usuario> usuario = this.usuarioRepository.findById(id);
-		
-		if(usuario.isEmpty()) return null;
-		
-		if(verificaPermissao) UsuarioServicePermissao.verificaIdUsuario(usuario.get().getId());
-		
-		return usuario.get();
+		return new UsuarioDTO(usuario);
 		
 	}
 	
-	public Usuario buscarPorEmail(String email) {
+	public void excluir(Long id) {
+	
+		var optUsuario = this.usuarioRepository.findById(id);
 		
-		Optional<Usuario> usuario = this.usuarioRepository.findByEmail(email);
+		if(!optUsuario.isPresent())
+			throw new ObjectNotFoundFromParameterException("Erro! usuário não encontrado para o id informado!");
 		
-		if(usuario.isEmpty()) return null;
+		//Verifica permissão para excluir
+		UsuarioServicePermissao.verificaPermissaoExcluirUsuario(optUsuario.get().getId());
 		
-		return usuario.get();
+		this.usuarioRepository.delete(optUsuario.get());
+		
 	}
 	
-	public Page<Usuario> buscarPorNome(String nome, Integer pagina, Integer qtdPorPagina){
+	public UsuarioDTO buscarPorId(Long id) {
 		
-		PageRequest page = PageRequest.of(pagina, qtdPorPagina,Sort.by(Direction.ASC, "nome"));
+		var optUsuario = this.usuarioRepository.findById(id);
 		
-		Page<Usuario> paginaUsuario = this.usuarioRepository.findByNomeContaining(nome, page);
+		if(!optUsuario.isPresent())
+			throw new ObjectNotFoundFromParameterException("Erro! usuário não encontrado para o id informado!");
+		
+		UsuarioServicePermissao.verificaIdUsuario(optUsuario.get().getId());
+		
+		return new UsuarioDTO(optUsuario.get());
+		
+	}
+	
+	public UsuarioDTO buscarPorEmail(String email) {
+		
+		var optUsuario = this.usuarioRepository.findByEmail(email);
+		
+		if(!optUsuario.isPresent()) return new UsuarioDTO();
+		
+		return new UsuarioDTO(optUsuario.get());
+		
+	}
+	
+	public Page<UsuarioDTO> buscarPorNome(String nome, Pageable paginacao){
+		
+		Page<Usuario> paginaUsuario;
 		
 		if(!nome.isEmpty()) {
-			paginaUsuario = this.usuarioRepository.findByNomeContaining(nome, page);
+			paginaUsuario = this.usuarioRepository.findByNomeContaining(nome, paginacao);
+			
 		}else {
-			paginaUsuario = this.usuarioRepository.findAll(page);
+			paginaUsuario = this.usuarioRepository.findAll(paginacao);
+			
 		}
 		
-		return paginaUsuario;
+		return paginaUsuario.map(UsuarioDTO::new);
+		
 	}
 	
-	public Page<Usuario> buscarTodos(Integer pagina, Integer qtdPorPagina){
+	public Page<UsuarioDTO> buscarTodos(Pageable paginacao){
 		
-		PageRequest page = PageRequest.of(pagina, qtdPorPagina,Sort.by(Direction.ASC, "nome"));
+		var paginaUsuario = this.usuarioRepository.findAll(paginacao);
 		
-		Page<Usuario> paginaUsuario = this.usuarioRepository.findAll(page);
+		return paginaUsuario.map(UsuarioDTO::new);
 		
-		return paginaUsuario;
 	}
 	
 	private static class UsuarioServicePermissao{
@@ -166,7 +175,6 @@ public class UsuarioService {
 			}
 			
 		}
-		
 		
 	}
 	

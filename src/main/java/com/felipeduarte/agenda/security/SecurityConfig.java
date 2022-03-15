@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +22,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig extends WebSecurityConfigurerAdapter{
 	
 	private static String[] PATH_PUBLICO = {"/usuario"};
+	private static String[] PATH_DOCUMENTATION = {
+			"/swagger-resources/**",
+	        "/swagger-ui.html",
+	        "/v2/api-docs",
+	        "/webjars/**",
+	        "favicon.ico",
+	};
 	
 	@Autowired
 	private UserService userService;
@@ -39,6 +47,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 	}
 	
 	@Override
+	public void configure(WebSecurity web) throws Exception {
+		web.ignoring().antMatchers(PATH_DOCUMENTATION);
+	}
+	
+	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(this.userService).passwordEncoder(bCryptPasswordEnconder());
 	}
@@ -54,6 +67,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 		corsConfiguration.addAllowedMethod("GET");
 		corsConfiguration.addAllowedMethod("POST");
 		corsConfiguration.addAllowedMethod("PUT");
+		corsConfiguration.addAllowedMethod("PATCH");
 		corsConfiguration.addAllowedMethod("DELETE");
 		source.registerCorsConfiguration("/**",corsConfiguration.applyPermitDefaultValues());
 		return source;
